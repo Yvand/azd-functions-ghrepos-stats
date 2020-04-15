@@ -1,0 +1,2 @@
+# Enforce line endings to use Linux style: https://docs.microsoft.com/en-us/azure/devops/pipelines/troubleshooting?view=azure-devops#line-endings-for-multiple-platforms
+* text eol=lf
