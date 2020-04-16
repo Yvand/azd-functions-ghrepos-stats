@@ -1,0 +1,56 @@
+# https://github.com/Azure/Actions
+
+name: Deploy Node.js project to Azure Function App
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # To trigger the action:
+  # curl -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token <token>" \
+  # --request POST --data '{"event_type": "manual-trigger-mytest", "client_payload": { "text": "a title"}}' https://api.github.com/repos/<org>/<repo>/dispatches
+  repository_dispatch:
+    types:
+      - manual-trigger-mytest
+      - manual-trigger-all
+
+env:
+  AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats    # set this to your application's name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
+  NODE_VERSION: '12.x'                     # set this to the node version to use (supports 8.x, 10.x, 12.x)
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Echo github.event.action
+      run: 'echo "github.event.action: ${{ github.event.action }}, github.event.client_payload.text: ${{ github.event.client_payload.text }}"'
+
+    - name: 'Checkout master'
+      uses: actions/checkout@master
+      if: github.event.action == "repository_dispatch"
+      run: |
+        echo "repository_dispatch triggered"
+
+    - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: 'Resolve Project Dependencies Using Npm'
+      shell: bash
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        npm install
+        npm run build --if-present
+        npm run test --if-present
+        popd
+
+    - name: 'Azure Functions Action'
+      uses: Azure/functions-action@v1.1.4
+      id: fa
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
