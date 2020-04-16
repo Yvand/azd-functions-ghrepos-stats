@@ -1,7 +1,7 @@
 import { AzureFunction, Context } from "@azure/functions"
 import * as Config from "../app/config";
 import { RepositoryData } from "../app/refreshData";
-import { getLatestDocument } from "../app/latestData";
+import { getLatestCosmosDocument } from "../app/latestData";
 const { performance } = require('perf_hooks');
 
 const repositoriesConfig: string[] = Config.repositories.split(";");
@@ -22,7 +22,7 @@ const processRepositories: AzureFunction = async function (context: Context, myT
 
         let promises: Promise<Config.RepositoryDataDocument>[] = new Array(2);
         promises[0] = repository.getFreshData();
-        promises[1] = getLatestDocument(repository.fullName);
+        promises[1] = getLatestCosmosDocument(repository.fullName);
         const [freshData, latestCosmosDocument] = await Promise.all(promises);
         let outputDocument = undefined;
 
@@ -43,11 +43,5 @@ const processRepositories: AzureFunction = async function (context: Context, myT
         }
     }));
 }
-
-async function asyncForEach(array: any, callback: any) {
-    for (let index = 0; index < array.length; index++) {
-      await callback(array[index], index, array);
-    }
-  }
 
 export default timerTrigger;
