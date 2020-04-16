@@ -29,7 +29,7 @@ jobs:
 
     - name: 'Checkout master'
       uses: actions/checkout@master
-      if: github.event.action == "repository_dispatch"
+      if: github.event.action == "manual-trigger-mytest"
 
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
