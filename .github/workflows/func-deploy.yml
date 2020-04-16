@@ -3,10 +3,6 @@
 name: Deploy Node.js project to Azure Function App
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
   # To trigger the action:
   # curl -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token <token>" \
   # --request POST --data '{"event_type": "manual-trigger-mytest", "client_payload": { "text": "a title"}}' https://api.github.com/repos/<org>/<repo>/dispatches
