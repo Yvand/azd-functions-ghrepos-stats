@@ -30,8 +30,6 @@ jobs:
     - name: 'Checkout master'
       uses: actions/checkout@master
       if: github.event.action == "repository_dispatch"
-      run: |
-        echo "repository_dispatch triggered"
 
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
