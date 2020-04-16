@@ -1,15 +1,14 @@
 # https://github.com/Azure/Actions
 
-name: Deploy Node.js project to Azure Function App
+name: Deploy to Azure Function App
 
 on:
   # To trigger the action:
   # curl -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token <token>" \
-  # --request POST --data '{"event_type": "manual-trigger-mytest", "client_payload": { "text": "a title"}}' https://api.github.com/repos/<org>/<repo>/dispatches
+  # --request POST --data '{"event_type": "trigger-deploy-to-azure", "client_payload": { "text": "a title"}}' https://api.github.com/repos/Yvand/azfunc-repository-stats/dispatches
   repository_dispatch:
     types:
-      - manual-trigger-mytest
-      - manual-trigger-all
+      - trigger-deploy-to-azure
 
 env:
   AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats    # set this to your application's name
