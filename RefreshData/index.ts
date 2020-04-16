@@ -9,11 +9,10 @@ const repositoryNames: string[] = repositoriesConfig.map(x => x.split(",")[0]);
 const repositories: RepositoryData[] = repositoryNames.map(x => new RepositoryData(x) )
 
 const timerTrigger: AzureFunction = async function (context: Context, myTimer: any): Promise<void> {
-    context.log('Timer function RefreshData started');
-    const startTime = performance.now;
+    //const startTime = performance.now;
     await processRepositories(context, myTimer);
-    const endTime = performance.now;
-    context.log(`Timer function RefreshData completed in ${endTime() - startTime()} milliseconds.`);
+    // const endTime = performance.now;
+    // context.log(`Timer function RefreshData completed in ${endTime() - startTime()} milliseconds.`);
 };
 
 const processRepositories: AzureFunction = async function (context: Context, myTimer: any): Promise<void> {
@@ -24,22 +23,22 @@ const processRepositories: AzureFunction = async function (context: Context, myT
         promises[0] = repository.getFreshData();
         promises[1] = getLatestCosmosDocument(repository.fullName);
         const [freshData, latestCosmosDocument] = await Promise.all(promises);
-        let outputDocument = undefined;
 
         context.log(`[${repository.fullName}] LatestReleaseDownloadCount in GitHub: ${freshData?.LatestReleaseDownloadCount}, LatestReleaseDownloadCount in CosmosDB: ${latestCosmosDocument?.LatestReleaseDownloadCount}`);
+        let addFreshDocument = false;
         if (!latestCosmosDocument) {
-            context.log(`[${repository.fullName}] Adding a new document in Cosmos DB because none was found...`);
-            outputDocument = freshData;
+            context.log(`[${repository.fullName}] Adding a document to Cosmos DB because none was found...`);
+            addFreshDocument = true;
         } else if (freshData.LatestReleaseDownloadCount !== latestCosmosDocument.LatestReleaseDownloadCount) {
-            context.log(`[${repository.fullName}] Adding a new document in Cosmos DB because previous one is outdated...`);
-            outputDocument = freshData;
+            context.log(`[${repository.fullName}] Adding a document to Cosmos DB because it is outdated...`);
+            addFreshDocument = true;
         }
         
-        if (outputDocument) {
-            context.log(`[${repository.fullName}] Adding a new document in Cosmos DB...`);
-            context.bindings.outputDocument = outputDocument;
+        if (addFreshDocument) {
+            //context.log(`[${repository.fullName}] Adding a document in Cosmos DB...`);
+            context.bindings.outputDocument = freshData;
         } else {
-            context.log(`[${repository.fullName}] Not adding a document to Cosmos DB.`);
+            context.log(`[${repository.fullName}] No document added to Cosmos DB.`);
         }
     }));
 }
