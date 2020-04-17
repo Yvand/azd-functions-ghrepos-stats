@@ -13,7 +13,6 @@
   },
   "description": "",
   "devDependencies": {
-    "@azure/cosmos": "^3.6.3",
     "@azure/functions": "^1.0.1-beta1",
     "@types/node": "^13.9.5",
     "apollo": "^2.26.0",
@@ -21,6 +20,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@azure/cosmos": "^3.6.3",
     "apollo-boost": "^0.4.7",
     "cross-fetch": "^3.0.4",
     "graphql": "^14.6.0"
