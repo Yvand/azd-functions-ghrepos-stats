@@ -17,7 +17,7 @@ env:
 
 jobs:
   build-and-deploy:
-    if: github.event.action == "trigger-deploy-to-azure"
+    if: github.event.action == 'trigger-deploy-to-azure'
     runs-on: ubuntu-latest
     steps:
     - name: Echo github.event.action
