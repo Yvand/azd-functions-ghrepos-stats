@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: [12.x]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,19 +26,15 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - run: |
+    - name: Build application
+      run: |
         npm ci
         npm run build --if-present
         npm test
-        echo $GITHUB_WORKSPACE
         echo $HOME
         cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
         cd /home/runner/work/azfunc-repository-stats/out
         rm -rf node_modules/
-        ls $HOME
-        ls /home/runner/work/azfunc-repository-stats/out
-      env:
-        CI: true
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v1

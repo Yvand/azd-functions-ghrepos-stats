@@ -22,8 +22,13 @@ jobs:
     - name: Echo github.event.action
       run: 'echo "github.event.action: ${{ github.event.action }}, github.event.client_payload.text: ${{ github.event.client_payload.text }}"'
 
-    - name: 'Checkout master'
-      uses: actions/checkout@master
+    # - name: 'Checkout master'
+    #   uses: actions/checkout@master
+
+    - name: 'Download artifacts'
+      uses: actions/download-artifact@v1
+      with:
+        name: azfunc-repository-stats-app
 
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
