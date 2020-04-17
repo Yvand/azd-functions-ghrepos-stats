@@ -35,13 +35,13 @@ jobs:
         cp -r $GITHUB_WORKSPACE $HOME/azfunc-repository-stats-app
         cd $HOME/azfunc-repository-stats-app
         rm -rf node_modules/
-        echo $HOME
+        ls $HOME
         ls $HOME/azfunc-repository-stats-app
       env:
         CI: true
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2-preview
       with:
         name: azfunc-repository-stats-app
-        path: ${{ env.HOME }}/azfunc-repository-stats-app
+        path: $HOME/azfunc-repository-stats-app
