@@ -44,4 +44,4 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: azfunc-repository-stats-app
-        path: ${HOME}/azfunc-repository-stats-app
+        path: ${{ HOME }}/azfunc-repository-stats-app
