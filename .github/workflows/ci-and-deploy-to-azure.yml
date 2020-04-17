@@ -1,9 +1,10 @@
-# https://github.com/Azure/Actions
-
-name: Deploy to Azure Function App
-
+name: CI & Deploy to Azure Function App
 on:
-  # To trigger the action:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  # To trigger the workflow job 'deploy':
   # curl -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token <token>" \
   # --request POST --data '{"event_type": "trigger-deploy-to-azure", "client_payload": { "text": "a title"}}' https://api.github.com/repos/Yvand/azfunc-repository-stats/dispatches
   repository_dispatch:
@@ -11,12 +12,43 @@ on:
       - trigger-deploy-to-azure
 
 env:
-  AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats    # set this to your application's name
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: './azfunc-repository-stats-app'      # set this to the path to your web app project, defaults to the repository root
-  NODE_VERSION: '12.x'                     # set this to the node version to use (supports 8.x, 10.x, 12.x)
+  AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats                     # Azure Function app name
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: './azfunc-repository-stats-app'     # Path to the web app projec, defaults to the working directory $GITHUB_WORKSPACE
+  NODE_VERSION: '12.x'
 
 jobs:
-  build-and-deploy:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # Do a clean installation of the dependencies and build the application, then copy it to a directory and remove node_modules folder
+    - name: Build application
+      run: |
+        npm ci
+        npm run build --if-present
+        npm test
+        echo $HOME
+        cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
+        cd /home/runner/work/azfunc-repository-stats/out
+        rm -rf node_modules/
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: azfunc-repository-stats-app
+        path: /home/runner/work/azfunc-repository-stats/out
+
+  deploy:
+    needs: build
     if: github.event.action == 'trigger-deploy-to-azure'
     runs-on: ubuntu-latest
     steps:
