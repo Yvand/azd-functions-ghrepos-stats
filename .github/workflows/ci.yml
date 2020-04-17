@@ -32,7 +32,7 @@ jobs:
         npm test
         echo $GITHUB_WORKSPACE
         echo $HOME
-        cp $GITHUB_WORKSPACE $HOME/azfunc-repository-stats-app
+        cp -r $GITHUB_WORKSPACE $HOME/azfunc-repository-stats-app
         cd $HOME/azfunc-repository-stats-app
         rm -rf node_modules/
         echo $HOME
