@@ -32,16 +32,16 @@ jobs:
         npm test
         echo $GITHUB_WORKSPACE
         echo $HOME
-        cp -r $GITHUB_WORKSPACE /home/out
-        cd /home/out
+        cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
+        cd /home/runner/work/azfunc-repository-stats/out
         rm -rf node_modules/
         ls $HOME
-        ls /home/out
+        ls /home/runner/work/azfunc-repository-stats/out
       env:
         CI: true
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v1
       with:
         name: azfunc-repository-stats-app
-        path: /home/out
+        path: /home/runner/work/azfunc-repository-stats/out
