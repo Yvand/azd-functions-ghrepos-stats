@@ -1,7 +1,8 @@
-import * as Config from "./config";
+import * as Config from "../config";
 import 'cross-fetch/polyfill';
 import ApolloClient, { gql, DocumentNode, StoreReader } from 'apollo-boost';
-import { RepositoryData_repository_releases } from "./graphql_types/RepositoryData";
+import { RepositoryData_repository_releases } from "../graphql_types/RepositoryData";
+import { IRepository } from "./IRepository"
 
 const apolloClient: ApolloClient<unknown> = new ApolloClient({
   uri: Config.github_graphql_uri,
@@ -14,12 +15,13 @@ const apolloClient: ApolloClient<unknown> = new ApolloClient({
   },
 });
 
-class RepositoryData {
-  fullName: string;
-  name: string;
-  owner: string;
-  additionalDownloadCount: number = 0;
-  mainAssetName: string | undefined;
+/** Return fresh data from GitHub */
+class GitHubRepository implements IRepository {
+  readonly fullName: string; // readonly: only be modifiable when an object is first created - https://www.typescriptlang.org/docs/handbook/interfaces.html#readonly-properties
+  private name: string;
+  private owner: string;
+  private additionalDownloadCount: number = 0;
+  private mainAssetName: string | undefined;
 
   /**
    *
@@ -38,7 +40,7 @@ class RepositoryData {
   }
 
   /**
-   * Return fresh data from GitHub
+   * 
    */
   async getFreshData(): Promise<Config.RepositoryDataDocument> {
     const now = new Date();
@@ -96,7 +98,7 @@ class RepositoryData {
   }
 }
 
-export {RepositoryData as RepositoryData};
+export {GitHubRepository};
 
 //const axios = require('axios').default;
 // const v3jsonQuery = async function (projectName: string): Promise<void> {

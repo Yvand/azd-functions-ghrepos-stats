@@ -1,4 +1,4 @@
-import * as Config from "./config";
+import * as Config from "../config";
 import { CosmosClient, FeedOptions, Database, Container, SqlQuerySpec } from "@azure/cosmos";
 
 // https://stackoverflow.com/questions/58783925/how-to-query-from-cosmosdb-in-azure-function-with-typescript
