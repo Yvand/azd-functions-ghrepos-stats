@@ -1,6 +1,6 @@
 import { AzureFunction, Context, HttpRequest, Logger } from "@azure/functions"
 import { RepositoryDataDocument } from "../app/config";
-import { getLatestCosmosDocument } from "../app/latestData";
+import { getLatestCosmosDocument } from "../app/storage/cosmosdbStorage";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
     const callback = (req.query.callback || (req.body && req.body.callback));

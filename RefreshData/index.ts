@@ -1,12 +1,13 @@
 import { AzureFunction, Context } from "@azure/functions"
 import * as Config from "../app/config";
-import { RepositoryData } from "../app/refreshData";
-import { getLatestCosmosDocument } from "../app/latestData";
+import { IRepository } from "../app/repositories/IRepository"
+import { GitHubRepository } from "../app/repositories/gitHubRepository";
+import { getLatestCosmosDocument } from "../app/storage/cosmosdbStorage";
 const { performance } = require('perf_hooks');
 
 const repositoriesConfig: string[] = Config.repositories.split(";");
 const repositoryNames: string[] = repositoriesConfig.map(x => x.split(",")[0]);
-const repositories: RepositoryData[] = repositoryNames.map(x => new RepositoryData(x) )
+const repositories: IRepository[] = repositoryNames.map(x => new GitHubRepository(x))
 
 const timerTrigger: AzureFunction = async function (context: Context, myTimer: any): Promise<void> {
     //const startTime = performance.now;

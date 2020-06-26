@@ -3,7 +3,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ master ]
+    types: [opened, synchronize, reopened]
   # To trigger the workflow job 'deploy':
   # curl -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token <token>" \
   # --request POST --data '{"event_type": "trigger-deploy-to-azure", "client_payload": { "text": "a title"}}' https://api.github.com/repos/Yvand/azfunc-repository-stats/dispatches
