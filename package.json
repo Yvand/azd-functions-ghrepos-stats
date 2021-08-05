@@ -9,7 +9,7 @@
     "start:host": "func start",
     "start": "npm-run-all --parallel start:host watch",
     "test": "echo \"No tests yet...\"",
-    "codegen:generate": "apollo codegen:generate --target typescript --localSchemaFile=./schema.graphql --tsFileExtension=d.ts --outputFlat=app/graphql_types --tagName=gql --excludes=node-modules/* --includes=app/**/*.ts --endpoint https://api.github.com/graphql --header \"Authorization: Bearer dba5aa9227d3feb0b4481256db40dcf1e3d3b7fc\""
+    "codegen:generate": "apollo codegen:generate --target typescript --localSchemaFile=./schema.graphql --tsFileExtension=d.ts --outputFlat=app/graphql_types --tagName=gql --excludes=node-modules/* --includes=app/**/*.ts --endpoint https://api.github.com/graphql --header \"Authorization: Bearer GITHUB_TOKEN\""
   },
   "description": "",
   "devDependencies": {
