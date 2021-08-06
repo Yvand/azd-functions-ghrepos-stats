@@ -14,7 +14,7 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats                     # Azure Function app name
   AZURE_FUNCTIONAPP_PACKAGE_PATH: './azfunc-repository-stats-app'     # Path to the web app projec, defaults to the working directory $GITHUB_WORKSPACE
-  NODE_VERSION: '12.x'
+  NODE_VERSION: '14.x'
 
 jobs:
   build:
@@ -34,7 +34,7 @@ jobs:
     - name: Build application
       run: |
         npm ci
-        npm run build --if-present
+        npm run build:production --if-present
         npm test
         echo $HOME
         cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
