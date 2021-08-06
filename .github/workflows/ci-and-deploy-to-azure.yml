@@ -14,14 +14,14 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: azfunc-repository-stats                     # Azure Function app name
   AZURE_FUNCTIONAPP_PACKAGE_PATH: './azfunc-repository-stats-app'     # Path to the web app projec, defaults to the working directory $GITHUB_WORKSPACE
-  NODE_VERSION: '12.x'
+  NODE_VERSION: '14.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.x]
     steps:
     - uses: actions/checkout@v2
     
