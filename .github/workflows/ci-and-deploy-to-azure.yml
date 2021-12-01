@@ -36,17 +36,18 @@ jobs:
         npm i -g azure-functions-core-tools
         npm ci
         npm run build:production
-        npm test
         echo $HOME
-        cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
-        cd /home/runner/work/azfunc-repository-stats/out
-        rm -rf node_modules/
+        
+    - name: action-zip
+      uses: montudor/action-zip@v1.0.0
+      with:
+        args: zip -qq -r azfunc-repository-stats.zip .
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
       with:
         name: azfunc-repository-stats-app
-        path: /home/runner/work/azfunc-repository-stats/out
+        path: $GITHUB_WORKSPACE/azfunc-repository-stats.zip
 
   deploy:
     needs: build
