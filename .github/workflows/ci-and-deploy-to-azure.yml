@@ -47,7 +47,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: azfunc-repository-stats-app
-        path: $GITHUB_WORKSPACE/azfunc-repository-stats.zip
+        path: ${{ github.workspace }}/azfunc-repository-stats.zip
 
   deploy:
     needs: build
