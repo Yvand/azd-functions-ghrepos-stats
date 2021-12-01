@@ -33,6 +33,7 @@ jobs:
     # Do a clean installation of the dependencies and build the application, then copy it to a directory and remove node_modules folder
     - name: Build application
       run: |
+        npm i -g azure-functions-core-tools
         npm ci
         npm run build:production
         npm test
