@@ -41,7 +41,7 @@ jobs:
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
       with:
-        args: zip -qq -r azfunc-repository-stats.zip .
+        args: zip -qq -r ${{ github.workspace }}/azfunc-repository-stats.zip ${{ github.workspace }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v1
