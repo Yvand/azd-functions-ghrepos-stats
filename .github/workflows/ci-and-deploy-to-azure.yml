@@ -44,7 +44,7 @@ jobs:
         args: zip -qq -r azfunc-repository-stats.zip .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: azfunc-repository-stats-app
         path: ${{ github.workspace }}/azfunc-repository-stats.zip
