@@ -61,21 +61,9 @@ jobs:
     #   uses: actions/checkout@master
 
     - name: 'Download artifacts'
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
       with:
         name: azfunc-repository-stats-app
-
-    - name: Setup Node ${{ env.NODE_VERSION }} Environment
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-
-    - name: 'Install production dependencies'
-      shell: bash
-      run: |
-        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-        npm install --only=production
-        popd
 
     - name: 'Azure Functions Action'
       uses: Azure/functions-action@v1.1.4
