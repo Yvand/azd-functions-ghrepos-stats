@@ -68,6 +68,7 @@ jobs:
     - name: Debug
       run: |
         ls -al ${{ runner.temp }}
+        id
         
     - name: 'Unzip Azure functions project'
       uses: montudor/action-zip@v1.0.0
