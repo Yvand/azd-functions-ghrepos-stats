@@ -30,7 +30,6 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    # Do a clean installation of the dependencies and build the application, then copy it to a directory and remove node_modules folder
     - name: Build application
       run: |
         npm i -g azure-functions-core-tools
@@ -65,6 +64,10 @@ jobs:
       with:
         name: azfunc-repository-stats-app
         path: ${{ runner.temp }}
+
+    - name: Debug
+      run: |
+        ls -al ${{ runner.temp }}
 
     - name: 'Unzip artifact'
       uses: montudor/action-zip@v1.0.0
