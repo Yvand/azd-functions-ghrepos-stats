@@ -33,19 +33,21 @@ jobs:
     # Do a clean installation of the dependencies and build the application, then copy it to a directory and remove node_modules folder
     - name: Build application
       run: |
+        npm i -g azure-functions-core-tools
         npm ci
-        npm run build --if-present
-        npm test
+        npm run build:production
         echo $HOME
-        cp -r $GITHUB_WORKSPACE /home/runner/work/azfunc-repository-stats/out
-        cd /home/runner/work/azfunc-repository-stats/out
-        rm -rf node_modules/
+        
+    - name: action-zip
+      uses: montudor/action-zip@v1.0.0
+      with:
+        args: zip -qq -r azfunc-repository-stats.zip .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: azfunc-repository-stats-app
-        path: /home/runner/work/azfunc-repository-stats/out
+        path: ${{ github.workspace }}/azfunc-repository-stats.zip
 
   deploy:
     needs: build
@@ -59,24 +61,17 @@ jobs:
     #   uses: actions/checkout@master
 
     - name: 'Download artifacts'
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
       with:
         name: azfunc-repository-stats-app
-
+        
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
       with:
         node-version: ${{ env.NODE_VERSION }}
 
-    - name: 'Install production dependencies'
-      shell: bash
-      run: |
-        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-        npm install --only=production
-        popd
-
     - name: 'Azure Functions Action'
-      uses: Azure/functions-action@v1.1.4
+      uses: Azure/functions-action@v1.4.4
       id: fa
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
