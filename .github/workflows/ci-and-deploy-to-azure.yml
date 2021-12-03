@@ -63,16 +63,16 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: azfunc-repository-stats-app
-        path: ${{ github.workspace }}
+        path: ${{ runner.temp }}
 
     - name: Debug
       run: |
-        ls -al ${{ github.workspace }}
+        ls -al ${{ runner.temp }}
         
     - name: 'Unzip Azure functions project'
       uses: montudor/action-zip@v1.0.0
       with:
-        args: unzip -qq ${{ github.workspace }}/azfunc-repository-stats.zip -d ${{ github.workspace }}
+        args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats.zip -d ${{ github.workspace }}
         
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
