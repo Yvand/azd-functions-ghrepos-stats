@@ -64,6 +64,12 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: azfunc-repository-stats-app
+        path: ${{ runner.temp }}
+
+    - name: action-zip
+      uses: montudor/action-zip@v1.0.0
+      with:
+        args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats.zip -d ${{ github.workspace }}
         
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
@@ -75,5 +81,5 @@ jobs:
       id: fa
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        package: ${{ github.workspace }}
         publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
