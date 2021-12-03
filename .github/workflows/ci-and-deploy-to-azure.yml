@@ -68,11 +68,6 @@ jobs:
     - name: Debug
       run: |
         ls -al ${{ runner.temp }}
-
-    - name: 'Unzip artifact'
-      uses: montudor/action-zip@v1.0.0
-      with:
-        args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats-app.zip -d .
         
     - name: 'Unzip Azure functions project'
       uses: montudor/action-zip@v1.0.0
