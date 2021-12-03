@@ -69,7 +69,7 @@ jobs:
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
       with:
-        args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats.zip -d ${{ github.workspace }}
+        args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats-app/azfunc-repository-stats.zip -d ${{ github.workspace }}
         
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
