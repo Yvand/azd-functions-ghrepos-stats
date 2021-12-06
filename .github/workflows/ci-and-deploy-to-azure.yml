@@ -70,6 +70,7 @@ jobs:
         ls -al ${{ runner.temp }}
         id
         chmod +x ${{ runner.temp }}/azfunc-repository-stats.zip
+        cp ${{ runner.temp }}/azfunc-repository-stats.zip ${{ runner.temp }}/azfunc-repository-stats2.zip
         ls -al ${{ runner.temp }}
         
     - name: 'Unzip Azure functions project'
