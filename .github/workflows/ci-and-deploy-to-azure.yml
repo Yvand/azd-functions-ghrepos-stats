@@ -74,7 +74,7 @@ jobs:
         ls -al ${{ runner.temp }}
         
     - name: 'Unzip Azure functions project'
-      uses: montudor/action-zip@v1.0.0
+      uses: TonyBogdanov/zip@1.0
       with:
         args: unzip -qq ${{ runner.temp }}/azfunc-repository-stats.zip -d ${{ github.workspace }}
         
