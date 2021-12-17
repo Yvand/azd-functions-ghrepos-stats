@@ -65,15 +65,15 @@ jobs:
         name: azfunc-repository-stats-app
         path: ${{ github.workspace }}
         
-    - name: 'Unzip Azure functions project'
-      uses: montudor/action-zip@v1.0.0
-      with:
-        args: unzip azfunc-repository-stats.zip
+    #- name: 'Unzip Azure functions project'
+#      uses: montudor/action-zip@v1.0.0
+#      with:
+#        args: unzip azfunc-repository-stats.zip
         
     - name: 'Debug'
       run: |
         ls -al ${{ github.workspace }}
-        rm ${{ github.workspace }}/azfunc-repository-stats.zip
+#        rm ${{ github.workspace }}/azfunc-repository-stats.zip
         
     - name: Setup Node ${{ env.NODE_VERSION }} Environment
       uses: actions/setup-node@v1
@@ -85,5 +85,5 @@ jobs:
       id: fa
       with:
         app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-        package: ${{ github.workspace }}
+        package: ${{ github.workspace }}/azfunc-repository-stats.zip
         publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
