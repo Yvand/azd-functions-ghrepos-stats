@@ -63,7 +63,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: azfunc-repository-stats-app
-        path: ${{ github.workspace }}
+        path: ${{ github.workspace }}/azfunc-repository-stats.zip
         
     #- name: 'Unzip Azure functions project'
 #      uses: montudor/action-zip@v1.0.0
@@ -82,8 +82,7 @@ jobs:
         inlineScript: |
           az account show
           ls -al $GITHUB_WORKSPACE
-          ls -al ${{ github.workspace }}
-          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src ${{ github.workspace }}/azfunc-repository-stats.zip
+          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/azfunc-repository-stats.zip
         
     - name: 'Debug'
       run: |
