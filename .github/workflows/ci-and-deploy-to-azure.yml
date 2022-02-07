@@ -69,6 +69,21 @@ jobs:
 #      uses: montudor/action-zip@v1.0.0
 #      with:
 #        args: unzip azfunc-repository-stats.zip
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Azure CLI script
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.30.0
+        inlineScript: |
+          az account show
+          ls -al $GITHUB_WORKSPACE
+          ls -al ${{ github.workspace }}
+          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src ${{ github.workspace }}/azfunc-repository-stats.zip
         
     - name: 'Debug'
       run: |
