@@ -71,4 +71,4 @@ jobs:
       with:
         azcliversion: 2.30.0
         inlineScript: |
-          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/azfunc-repository-stats.zip
+          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_ZIP_NAME }}
