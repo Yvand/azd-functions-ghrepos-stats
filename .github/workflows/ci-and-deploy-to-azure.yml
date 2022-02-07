@@ -12,7 +12,8 @@ on:
       - trigger-deploy-to-azure
 
 env:
-  ARTIFACT_ZIP_NAME: azfunc-repository-stats.zip                     # Zip artifact name
+  ARTIFACT_NAME: azfunc-repository-stats-artifact        # Artifact name
+  ARTIFACT_APP_NAME: azfunc-repository-stats-app.zip     # Function app compiled and zipped (inside the artifact)
   NODE_VERSION: '14.x'
 
 jobs:
@@ -34,18 +35,17 @@ jobs:
         npm i -g azure-functions-core-tools
         npm ci
         npm run build:production
-        echo $HOME
         
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
       with:
-        args: zip -qq -r ${{ env.ARTIFACT_ZIP_NAME }} .
+        args: zip -qq -r ${{ env.ARTIFACT_APP_NAME }} .
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: azfunc-repository-stats-app
-        path: ${{ github.workspace }}/${{ env.ARTIFACT_ZIP_NAME }}
+        name: ${{ env.ARTIFACT_NAME }}
+        path: ${{ github.workspace }}/${{ env.ARTIFACT_APP_NAME }}
 
   deploy:
     needs: build
@@ -58,7 +58,7 @@ jobs:
     - name: 'Download artifact'
       uses: actions/download-artifact@v2
       with:
-        name: azfunc-repository-stats-app
+        name: ${{ env.ARTIFACT_NAME }}
         path: ${{ github.workspace }}
 
     - name: Azure Login
@@ -71,4 +71,4 @@ jobs:
       with:
         azcliversion: 2.30.0
         inlineScript: |
-          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_ZIP_NAME }}
+          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_APP_NAME }}
