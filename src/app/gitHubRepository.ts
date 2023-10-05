@@ -35,7 +35,7 @@ import { RepositoryDataDocument } from "./common";
 
         if (release.id === latestReleaseId) {
           latestDataDocument.LatestReleaseDownloadCount += asset.download_count;
-          if (asset.name.toUpperCase() === mainAssetName) {
+          if (asset.name.toUpperCase() === mainAssetName.toUpperCase()) {
             latestDataDocument.LatestAssetUrl = asset.browser_download_url;
           }
         }
