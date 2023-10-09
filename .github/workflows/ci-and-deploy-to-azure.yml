@@ -10,23 +10,23 @@ on:
   repository_dispatch:
     types:
       - trigger-deploy-to-azure
+  workflow_dispatch:
 
 env:
   ARTIFACT_NAME: azfunc-repository-stats-artifact        # Artifact name
   ARTIFACT_APP_NAME: azfunc-repository-stats-app.zip     # Function app compiled and zipped (inside the artifact)
-  NODE_VERSION: '14.x'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [18]
     steps:
     - uses: actions/checkout@v2
     
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
 
@@ -34,7 +34,7 @@ jobs:
       run: |
         npm i -g azure-functions-core-tools
         npm ci
-        npm run build:production
+        npm run build
         
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
@@ -42,7 +42,7 @@ jobs:
         args: zip -qq -r ${{ env.ARTIFACT_APP_NAME }} .
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ env.ARTIFACT_NAME }}
         path: ${{ github.workspace }}/${{ env.ARTIFACT_APP_NAME }}
@@ -56,7 +56,7 @@ jobs:
       run: 'echo "github.event.action: ${{ github.event.action }}, github.event.client_payload.text: ${{ github.event.client_payload.text }}"'
 
     - name: 'Download artifact'
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ env.ARTIFACT_NAME }}
         path: ${{ github.workspace }}
@@ -69,6 +69,6 @@ jobs:
     - name: Azure CLI script
       uses: azure/CLI@v1
       with:
-        azcliversion: 2.30.0
+        azcliversion: 'latest'
         inlineScript: |
           az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_APP_NAME }}
