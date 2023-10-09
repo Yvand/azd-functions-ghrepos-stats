@@ -1,8 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext, output, Timer } from "@azure/functions";
-import { GetRelease, GetReleases } from "../app/gitHubApi";
-import { RefreshStatistics } from "../app/gitHubRepository";
+import { GetLatestDataFromGitHub } from "../app/gitHubRepository";
 import { RepositoryDataDocument, Settings } from "../app/common";
-import { GetLatestDocument } from "../app/cosmosData";
+import { GetLatestDocument as GetLatestDocumentFromCosmosDB } from "../app/cosmosData";
 
 const cosmosOutput = output.cosmosDB({
   connection: "CosmosConnection",
@@ -15,21 +14,30 @@ const cosmosOutput = output.cosmosDB({
 
 const projectsConfig: string[] | undefined = Settings.Repositories?.split(";");
 
-export async function GetLatestData(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+export async function GetData(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   if (!projectsConfig) {
     console.error("Could not read app setting 'Repositories'");
-    return { status: 500, body: "an internal error has occurred." };
-  }
-  const projectConfig = projectsConfig.find(x => x.toUpperCase().startsWith("Yvand/EntraCP".toUpperCase()));
-  if (projectConfig) {
-    //   this.mainAssetName = projectConfig.split(",")[1].toUpperCase();
-    //   this.additionalDownloadCount = Number(projectConfig.split(",")[2]);
+    return { status: 500, body: "An internal error has occurred." };
   }
 
-  const document: RepositoryDataDocument = await RefreshStatistics("Yvand/EntraCP", "AzureCP.wsp", 1000);
-  const stringifiedDocument = JSON.stringify(document);
+  const projectName: string | null = request.query.get('project');
+  if (!projectName) {
+    return { status: 400, body: "Invalid parameters." };
+  }
 
-  return { body: stringifiedDocument };
+  const callback: string | null = request.query.get('callback');
+  if (!callback) {
+    return { status: 400, body: "Invalid parameters." };
+  }
+
+  const projectConfig = projectsConfig.find(x => x.toUpperCase().startsWith(projectName.toUpperCase()));
+  if (!projectConfig) {
+    return { status: 400, body: "Invalid parameters." };
+  }
+
+  const cosmosDBDocument: RepositoryDataDocument = await GetLatestDocumentFromCosmosDB(projectName); // Query CosmosDB
+  const cosmosDBDocumentStringified = JSON.stringify(cosmosDBDocument);
+  return { body: `${callback}(${cosmosDBDocumentStringified});` };
 };
 
 export async function RefreshData(myTimer: Timer, context: InvocationContext): Promise<RepositoryDataDocument[] | undefined> {
@@ -38,7 +46,7 @@ export async function RefreshData(myTimer: Timer, context: InvocationContext): P
     return;
   }
 
-  let documentsOutput: Array<RepositoryDataDocument> = [];
+  let cosmosDBDocumentsOutput: Array<RepositoryDataDocument> = [];
   await Promise.all(projectsConfig.map(async projectConfig => {
     if (projectConfig.split(",")?.length !== 3) {
       console.error(`App setting 'Repositories' does not have the expected format: '${projectConfig}'`);
@@ -51,34 +59,34 @@ export async function RefreshData(myTimer: Timer, context: InvocationContext): P
 
     context.log(`[${projectName}] Getting data...`);
     let promises: Promise<RepositoryDataDocument>[] = new Array(2);
-    promises[0] = RefreshStatistics(projectName, mainAssetName, additionalDownloadCount); // Query GitHub
-    promises[1] = GetLatestDocument(projectName); // Query CosmosDB
-    const [FreshGithubData, latestCosmosDocument] = await Promise.all(promises);
+    promises[0] = GetLatestDataFromGitHub(projectName, mainAssetName, additionalDownloadCount); // Query GitHub
+    promises[1] = GetLatestDocumentFromCosmosDB(projectName); // Query CosmosDB
+    const [githubDocument, cosmosDBDocument] = await Promise.all(promises);
 
-    if (FreshGithubData === undefined) {
+    if (githubDocument === undefined) {
       context.error(`[${projectName}] Could not get fresh data from GitHub, skip project.`);
       return;
     }
 
-    if (latestCosmosDocument === undefined) {
+    if (cosmosDBDocument === undefined) {
       context.warn(`[${projectName}] Could not get latest document from CosmosDB, add latest CosmosDB document to output.`);
-      documentsOutput.push(FreshGithubData);
-    } else if (FreshGithubData.LatestReleaseDownloadCount !== latestCosmosDocument.LatestReleaseDownloadCount) {
-      context.log(`[${projectName}] Adding a document to Cosmos DB because CosmosDB.LatestReleaseDownloadCount has ${latestCosmosDocument.LatestReleaseDownloadCount} and GitHub.LatestReleaseDownloadCount has ${FreshGithubData.LatestReleaseDownloadCount}...`);
-      documentsOutput.push(FreshGithubData);
+      cosmosDBDocumentsOutput.push(githubDocument);
+    } else if (githubDocument.LatestReleaseDownloadCount !== cosmosDBDocument.LatestReleaseDownloadCount) {
+      context.log(`[${projectName}] Adding a document to Cosmos DB because CosmosDB.LatestReleaseDownloadCount has ${cosmosDBDocument.LatestReleaseDownloadCount} and GitHub.LatestReleaseDownloadCount has ${githubDocument.LatestReleaseDownloadCount}...`);
+      cosmosDBDocumentsOutput.push(githubDocument);
     } else {
-      context.log(`[${projectName}] CosmosDB.LatestReleaseDownloadCount has ${latestCosmosDocument.LatestReleaseDownloadCount} and is up to date`);
+      context.log(`[${projectName}] CosmosDB.LatestReleaseDownloadCount has ${cosmosDBDocument.LatestReleaseDownloadCount} and is up to date`);
     }
   }));
 
   // return undefined;
-  return documentsOutput;
+  return cosmosDBDocumentsOutput;
 }
 
-app.http('GetLatestData', {
+app.http('GetData', {
   methods: ['GET'],
-  authLevel: 'anonymous',
-  handler: GetLatestData
+  authLevel: 'function',
+  handler: GetData
 });
 
 app.timer('RefreshData', {

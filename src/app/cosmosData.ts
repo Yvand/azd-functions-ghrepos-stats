@@ -2,7 +2,6 @@ import { FeedOptions } from "@azure/cosmos";
 import { RepositoryDataDocument, Settings } from "./common";
 const { CosmosClient } = require("@azure/cosmos");
 
-
 const endpoint = Settings.CosmosEndpoint;
 const key = Settings.CosmosKey;
 const client = new CosmosClient({ endpoint, key });

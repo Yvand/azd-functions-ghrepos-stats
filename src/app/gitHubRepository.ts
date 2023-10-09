@@ -3,9 +3,9 @@ import { RepositoryDataDocument } from "./common";
 const { v4: uuidv4 } = require('uuid');
 
 /**
- * 
+ * Query GitHub to get the latest repository data
  */
-export async function RefreshStatistics(repository: string, mainAssetName: string, additionalDownloadCount: number = 0): Promise<RepositoryDataDocument> {
+export async function GetLatestDataFromGitHub(repository: string, mainAssetName: string, additionalDownloadCount: number = 0): Promise<RepositoryDataDocument> {
   const now = new Date();
   const yyyyMMRegex: string = "^\\d\\d\\d\\d-\\d\\d";
   const yyyyMMArray = now.toISOString().match(yyyyMMRegex)
