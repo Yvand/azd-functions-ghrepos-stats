@@ -8,6 +8,7 @@ export const Settings = {
     CosmosCollectionId: process.env.CosmosCollectionId,
     CosmosEndpoint: connectionSplitted ? connectionSplitted[0].substring("AccountEndpoint=".length) : "https://host.docker.internal:8081/",
     CosmosKey: connectionSplitted ? connectionSplitted[1].substring("AccountKey=".length) : "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
+    FuncRefreshDataSchedule: process.env.FuncRefreshDataSchedule ? process.env.FuncRefreshDataSchedule : "0 */30 * * * *",
 }
 
 export declare type RepositoryDataDocument = { 

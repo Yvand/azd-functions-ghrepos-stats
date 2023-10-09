@@ -20,14 +20,14 @@ export async function GetLatestDocument(repository: string): Promise<RepositoryD
     const options: FeedOptions = {
         maxItemCount: 1,
         bufferItems: false,
-        partitionKey: yyyyMMArray ? [0] : "", // Limits the query to a specific partition key. Default: undefined
+        partitionKey: yyyyMMArray, // Limits the query to a specific partition key. Default: undefined
     };
 
-    const { resources } = await container.items
+    const { resources, diagnostics } = await container.container.items
         .query({
             query: latestDocumentQuery,
             parameters: [{ name: "@Repository", value: repository }]
         }, options)
         .fetchAll();    // https://learn.microsoft.com/en-us/javascript/api/@azure/cosmos/queryiterator?view=azure-node-latest#@azure-cosmos-queryiterator-fetchall
-    return resources? resources[0] : undefined;
+    return resources?.length === 1 ? resources[0] : undefined;
 }
