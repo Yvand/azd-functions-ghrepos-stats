@@ -11,10 +11,19 @@ on:
     types:
       - trigger-deploy-to-azure
   workflow_dispatch:
+    inputs:
+      deploy_functions:
+        type: choice
+        description: 'Set to true to deploy the functions to Azure'
+        options: 
+          - true
+          - false
+        required: true
+        default: 'false'
 
 env:
-  ARTIFACT_NAME: azfunc-repository-stats-artifact        # Artifact name
-  ARTIFACT_APP_NAME: azfunc-repository-stats-app.zip     # Function app compiled and zipped (inside the artifact)
+  ARTIFACT_NAME: repository-statistics-artifact        # Artifact name
+  ARTIFACT_APP_NAME: repository-statistics-app.zip     # Function app compiled and zipped (inside the artifact)
 
 jobs:
   build:
@@ -50,7 +59,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event.action == 'trigger-deploy-to-azure'
+    if: inputs.deploy_functions == true || github.event.action == 'trigger-deploy-to-azure'
     runs-on: ubuntu-latest
     steps:
     - name: Echo github.event.action
@@ -72,4 +81,4 @@ jobs:
       with:
         azcliversion: 'latest'
         inlineScript: |
-          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} -n ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_APP_NAME }}
+          az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src $GITHUB_WORKSPACE/${{ env.ARTIFACT_APP_NAME }}
