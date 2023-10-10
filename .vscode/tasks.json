@@ -4,29 +4,35 @@
     {
       "type": "func",
       "label": "func: host start",
-      "command": "host start --port 7077",
-      "problemMatcher": "$func-watch",
+      "command": "host start",
+      "problemMatcher": "$func-node-watch",
       "isBackground": true,
-      "dependsOn": "npm build"
+      "dependsOn": "npm build (functions)"
     },
     {
       "type": "shell",
-      "label": "npm build",
+      "label": "npm build (functions)",
       "command": "npm run build",
-      "dependsOn": "npm install",
+      "dependsOn": "npm clean (functions)",
       "problemMatcher": "$tsc"
     },
     {
       "type": "shell",
-      "label": "npm install",
+      "label": "npm install (functions)",
       "command": "npm install"
     },
     {
       "type": "shell",
-      "label": "npm prune",
+      "label": "npm prune (functions)",
       "command": "npm prune --production",
-      "dependsOn": "npm build",
+      "dependsOn": "npm build (functions)",
       "problemMatcher": []
+    },
+    {
+      "type": "shell",
+      "label": "npm clean (functions)",
+      "command": "npm run clean",
+      "dependsOn": "npm install (functions)"
     }
   ]
 }
