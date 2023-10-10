@@ -59,7 +59,7 @@ jobs:
 
   deploy:
     needs: build
-    if: inputs.deploy_functions == true || github.event.action == 'trigger-deploy-to-azure'
+    if: inputs.deploy_functions == 'true' || github.event.action == 'trigger-deploy-to-azure'
     runs-on: ubuntu-latest
     steps:
     - name: Echo github.event.action
