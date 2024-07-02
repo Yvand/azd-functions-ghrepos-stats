@@ -41,3 +41,5 @@ jobs:
           app-name: 'projects-statistics'
           package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F401DD5856D049EA94F4D1DF74A0BD58 }}
+          sku: flexconsumption
+          remote-build: true
