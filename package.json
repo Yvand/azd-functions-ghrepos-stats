@@ -17,9 +17,9 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@types/node": "18.x",
-    "azure-functions-core-tools": "^4.0.5858",
+    "@types/node": "^20.14.9",
+    "azure-functions-core-tools": "^4.0.5907",
     "rimraf": "^5.0.7",
-    "typescript": "^5.5.2"
+    "typescript": "^5.5.3"
   }
 }
