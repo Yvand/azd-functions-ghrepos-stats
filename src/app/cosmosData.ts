@@ -1,19 +1,14 @@
 import { FeedOptions, CosmosClient, CosmosClientOptions } from "@azure/cosmos";
 import { RepositoryDataDocument, Settings } from "./common";
-// const {  } = require("@azure/cosmos");
-import {DefaultAzureCredential} from "@azure/identity";
+import { DefaultAzureCredential } from "@azure/identity";
 
-const endpoint = Settings.CosmosEndpoint;
-// const key = Settings.CosmosKey;
-// const client = new CosmosClient({ endpoint, key });
 // https://learn.microsoft.com/en-us/javascript/api/overview/azure/identity-readme?view=azure-node-latest#defaultazurecredential
 const credentials = new DefaultAzureCredential();   // Use managed identity
 // https://learn.microsoft.com/en-us/javascript/api/%40azure/cosmos/cosmosclientoptions?view=azure-node-latest
 const options: CosmosClientOptions = {
-    endpoint: endpoint,
+    endpoint: Settings.CosmosEndpoint,
     aadCredentials: credentials,
 }
-// const client = new CosmosClient({ endpoint, credentials });
 // https://learn.microsoft.com/en-us/javascript/api/@azure/cosmos/cosmosclient?view=azure-node-latest
 const client = new CosmosClient(options);
 const latestDocumentQuery: string = "SELECT TOP 1 * FROM c WHERE c.Repository = @Repository ORDER BY c.DateStatCreatedTicks DESC";

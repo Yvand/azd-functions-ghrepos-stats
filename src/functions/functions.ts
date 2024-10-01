@@ -1,6 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext, output, Timer } from "@azure/functions";
 import { GetLatestDataFromGitHub } from "../app/gitHubRepository";
-import { RepositoryDataDocument, Settings } from "../app/common";
+import { RepositoryDataDocument, safeWait, Settings } from "../app/common";
 import { GetLatestDocument as GetLatestDocumentFromCosmosDB } from "../app/cosmosData";
 
 const cosmosOutput = output.cosmosDB({
@@ -36,7 +36,14 @@ export async function GetData(request: HttpRequest, context: InvocationContext):
   }
 
   context.log(`[${projectName}] Getting data...`);
-  const cosmosDBDocument: RepositoryDataDocument = await GetLatestDocumentFromCosmosDB(projectName); // Query CosmosDB
+  let cosmosDBDocument: RepositoryDataDocument;
+  let error;
+  [cosmosDBDocument, error] = await safeWait(GetLatestDocumentFromCosmosDB(projectName)); // Query CosmosDB
+  if (error) {
+    context.error(`[${projectName}] Could not get data from Cosmos DB: ${error.message}...`);
+    return { status: 500, body: `An unexpected error has occurred` };
+  }
+
   const cosmosDBDocumentStringified = JSON.stringify(cosmosDBDocument);
   return { body: `${callback}(${cosmosDBDocumentStringified});` };
 };
