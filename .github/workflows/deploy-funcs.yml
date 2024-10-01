@@ -3,6 +3,9 @@
 
 name: Build and deploy Node.js project to Azure Functions App
 
+permissions:
+  id-token: write
+
 on:
   workflow_dispatch:
 
