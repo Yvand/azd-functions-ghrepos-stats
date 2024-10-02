@@ -3,11 +3,15 @@
 
 name: Build and deploy Node.js project to Azure Functions App
 
+permissions:
+  id-token: write
+
 on:
   workflow_dispatch:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  ZIP_FILE_NAME: projects-statistics-app.zip
   NODE_VERSION: '20.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
 
 jobs:
@@ -26,18 +30,41 @@ jobs:
         shell: bash
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          npm install --loglevel=error
+          npm ci --loglevel=error
           npm run build --if-present
           npm run test --if-present
+          npm prune --production # remove packages in devDependencies
           popd
 
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
+      # Create zip as documented in https://learn.microsoft.com/en-us/azure/azure-functions/deployment-zip-push#deployment-zip-file-requirements
+      - name: 'Create zip app package file'
+        uses: montudor/action-zip@v1.0.0
         with:
-          app-name: 'projects-statistics'
-          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
-          respect-funcignore: true
-          sku: flexconsumption
-          remote-build: true
+          args: zip -qq -r ${{ env.ZIP_FILE_NAME }} . --exclude @.funcignore --exclude .funcignore
+  
+      # Login using a managed identity
+      - name: Azure Login
+        uses: Azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Fails due to a dep on debug 4.1.1 in @azure/cosmos 4.0.0: https://github.com/Azure/functions-action/issues/238
+      # - name: 'Deploy Azure Functions'
+      #   uses: Azure/functions-action@v1
+      #   id: fa
+      #   with:
+      #     app-name:  ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
+      #     package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+      #     respect-funcignore: true
+      #     sku: flexconsumption
+      #     remote-build: true
+
+      - name: 'Deploy Azure Functions using az cli'
+        uses: Azure/cli@v2
+        with:
+          azcliversion: 'latest'
+          inlineScript: |
+            az functionapp deployment source config-zip -g ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_FUNCTIONAPP_NAME }} --src ${{ github.workspace }}/${{ env.ZIP_FILE_NAME }}
+            #func azure functionapp publish ${{ secrets.AZURE_FUNCTIONAPP_NAME }}

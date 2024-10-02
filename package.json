@@ -12,14 +12,15 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "@azure/cosmos": "^4.0.0",
-    "@azure/functions": "^4.5.0",
+    "@azure/cosmos": "^4.1.1",
+    "@azure/functions": "^4.5.1",
+    "@azure/identity": "^4.4.1",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.14.9",
-    "azure-functions-core-tools": "^4.0.5907",
-    "rimraf": "^5.0.7",
-    "typescript": "^5.5.3"
+    "@types/node": "^22.7.4",
+    "azure-functions-core-tools": "^4.0.6280",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.2"
   }
 }
