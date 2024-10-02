@@ -4,8 +4,8 @@ const ConnectionPrefix = process.env.ConnectionPrefix || "CosmosOutputBinding";
 export const Settings = {
     Repositories: process.env.Repositories,
     ConnectionPrefix: ConnectionPrefix,
-    CosmosDatabaseId: process.env.CosmosDatabaseId || "",
-    CosmosCollectionId: process.env.CosmosCollectionId,
+    CosmosDatabaseId: process.env.CosmosDatabaseId || "<Could not read app setting CosmosDatabaseId>",
+    CosmosCollectionId: process.env.CosmosCollectionId || "<Could not read app setting CosmosCollectionId>",
     CosmosEndpoint: process.env[`${ConnectionPrefix}__accountEndpoint`] || "",
     FuncRefreshDataSchedule: process.env.FuncRefreshDataSchedule ? process.env.FuncRefreshDataSchedule : "0 */30 * * * *",
 }
