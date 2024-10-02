@@ -1,13 +1,12 @@
 import * as process from "process";
 
-const connectionSplitted: string[] | undefined = process.env.CosmosConnection?.split(";");
+const ConnectionPrefix = process.env.ConnectionPrefix || "CosmosOutputBinding";
 export const Settings = {
     Repositories: process.env.Repositories,
-    CosmosConnection: process.env.CosmosConnection,
+    ConnectionPrefix: ConnectionPrefix,
     CosmosDatabaseId: process.env.CosmosDatabaseId || "",
     CosmosCollectionId: process.env.CosmosCollectionId,
-    CosmosEndpoint: connectionSplitted ? connectionSplitted[0].substring("AccountEndpoint=".length) : "https://host.docker.internal:8081/",
-    CosmosKey: connectionSplitted ? connectionSplitted[1].substring("AccountKey=".length) : "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
+    CosmosEndpoint: process.env[`${ConnectionPrefix}__accountEndpoint`] || "",
     FuncRefreshDataSchedule: process.env.FuncRefreshDataSchedule ? process.env.FuncRefreshDataSchedule : "0 */30 * * * *",
 }
 
