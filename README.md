@@ -1,4 +1,3 @@
-# azfunc-repository-stats
- Azure functions to generate statistics of repositories in Cosmos DB
+# Purpose
 
-![Build](https://github.com/Yvand/azfunc-repository-stats/workflows/CI%20&%20Deploy%20to%20Azure%20Function%20App/badge.svg)
+Simple Azure functions to generate statistics about GitHub repositories, stored in Cosmos DB, and return the latest data
