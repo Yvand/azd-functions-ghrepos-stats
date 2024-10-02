@@ -5,6 +5,7 @@ name: Build and deploy Node.js project to Azure Functions App
 
 permissions:
   id-token: write
+  attestations: write
 
 on:
   workflow_dispatch:
@@ -47,6 +48,11 @@ jobs:
         uses: montudor/action-zip@v1.0.0
         with:
           args: zip -qq -r ${{ env.ZIP_FILE_NAME }} . --exclude @.funcignore --exclude .funcignore
+
+      # https://github.com/actions/attest-build-provenance
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: '${{ github.workspace }}/${{ env.ZIP_FILE_NAME }}'
 
       - name: Upload zip to artifacts
         uses: actions/upload-artifact@v4
