@@ -29,6 +29,7 @@ param logAnalyticsName string = ''
 param resourceGroupName string = ''
 param storageAccountName string = ''
 param vNetName string = ''
+param vaultName string = ''
 param disableLocalAuth bool = true
 
 var abbrs = loadJsonContent('./abbreviations.json')
@@ -160,6 +161,39 @@ module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = 
   params: {
     appInsightsName: monitoring.outputs.applicationInsightsName
     roleDefinitionID: monitoringRoleDefinitionId
+    principalID: processorUserAssignedIdentity.outputs.identityPrincipalId
+  }
+}
+
+// Keyvault
+module vault './core/vault/key-vault.bicep' = {
+  name: 'vault'
+  scope: rg
+  params: {
+    name: !empty(vaultName) ? vaultName : '${abbrs.vaultAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    publicNetworkAccess: 'Enabled'
+    ipAddresses: ipAddresses
+    virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
+    tenantId: tenant().tenantId
+  }
+}
+
+// var vaultRoleDefinitionId  = '4633458b-17de-408a-b874-0445c86b69e6' // Key Vault Secrets User
+@description('This is the built-in Key Vault Administrator role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
+resource keyVaultSecretsUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: '4633458b-17de-408a-b874-0445c86b69e6'
+}
+
+// Allow access from processor to storage account using a managed identity
+module vaultRoleAssignmentApi './core/vault/vault-access.bicep' = {
+  name: 'vaultRoleAssignmentProcessor'
+  scope: rg
+  params: {
+    keyVaultName: vault.outputs.name
+    roleDefinitionID: keyVaultSecretsUserRoleDefinition.id
     principalID: processorUserAssignedIdentity.outputs.identityPrincipalId
   }
 }
