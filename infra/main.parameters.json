@@ -10,6 +10,15 @@
     },
     "ipAddresses": {
       "value": ["${IPADDRESSES}"]
+    },
+    "appSettings": {
+      "value": {
+        "CosmosOutputBinding__accountEndpoint": "${APPSETTING_COSMOSOUTPUTBINDING__ACCOUNTENDPOINT}",
+        "CosmosOutputBinding__credential": "managedidentity",
+        "CosmosCollectionId": "${APPSETTING_COSMOSCOLLECTIONID}",
+        "CosmosDatabaseId": "${APPSETTING_COSMOSDATABASEID}",
+        "Repositories": "${APPSETTING_REPOSITORIES}"
+      }
     }
   }
 }

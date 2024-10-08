@@ -18,6 +18,9 @@ param location string
 @description('List of IP addresses to be allowed in the storage firewall.')
 param ipAddresses array
 
+@description('Application settings to set in the functions app.')
+param appSettings object
+
 param processorServiceName string = ''
 param processorUserAssignedIdentityName string = ''
 param applicationInsightsName string = ''
@@ -65,8 +68,7 @@ module processor './app/processor.bicep' = {
     storageAccountName: storage.outputs.name
     identityId: processorUserAssignedIdentity.outputs.identityId
     identityClientId: processorUserAssignedIdentity.outputs.identityClientId
-    appSettings: {
-    }
+    appSettings: appSettings
     virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
   }
 }
