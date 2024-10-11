@@ -4,16 +4,16 @@ param tags object = {}
 
 param allowBlobPublicAccess bool = false
 @allowed(['Enabled', 'Disabled', 'SecuredByPerimeter'])
-param publicNetworkAccess string = 'Disabled'
+param publicNetworkAccess string = 'Enabled'
 param containers array = []
 param kind string = 'StorageV2'
 param minimumTlsVersion string = 'TLS1_2'
 param sku object = { name: 'Standard_LRS' }
-param ipAddresses array
+param allowedIpAddresses array
 param virtualNetworkSubnetId string
 
 var ipRules = [
-  for ipAddress in ipAddresses: {
+  for ipAddress in allowedIpAddresses: {
     action: 'Allow'
     value: ipAddress
   }
@@ -30,17 +30,16 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     allowBlobPublicAccess: allowBlobPublicAccess
     publicNetworkAccess: publicNetworkAccess
     allowSharedKeyAccess: false
-    //defaultToOAuthAuthentication: true
+    defaultToOAuthAuthentication: true
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Deny'
       ipRules: ipRules
-      // virtualNetworkRules: map([virtualNetworkSubnetId], subnetId => { id: subnetId })
-      // virtualNetworkRules: [
-      //   {
-      //     id: virtualNetworkSubnetId
-      //   }
-      // ]
+      virtualNetworkRules: [
+        {
+          id: virtualNetworkSubnetId
+        }
+      ]
     }
   }
 

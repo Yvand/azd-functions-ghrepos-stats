@@ -11,7 +11,7 @@ resource vaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
   name: guid(keyVault.id, principalID, roleDefinitionID)
   scope: keyVault
   properties: {
-    roleDefinitionId: roleDefinitionID //resourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionID)
+    roleDefinitionId: roleDefinitionID
     principalId: principalID
     principalType: 'ServicePrincipal' // Workaround for https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-template#new-service-principal
   }

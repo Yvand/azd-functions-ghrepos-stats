@@ -6,12 +6,12 @@ param tenantId string
 @allowed(['Enabled', 'Disabled'])
 param publicNetworkAccess string = 'Disabled'
 param sku object = { family: 'A', name: 'standard' }
-param ipAddresses array
-// param principalIdsAsSecretReaders array
+param allowedIpAddresses array
 param virtualNetworkSubnetId string
+param enableSoftDelete bool = true
 
 var ipRules = [
-  for ipAddress in ipAddresses: {
+  for ipAddress in allowedIpAddresses: {
     value: ipAddress
   }
 ]
@@ -23,6 +23,7 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   properties: {
     sku: sku
     tenantId: tenantId
+    enableSoftDelete: enableSoftDelete
     enableRbacAuthorization: true
     publicNetworkAccess: publicNetworkAccess
     networkAcls: {
@@ -30,11 +31,11 @@ resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       defaultAction: 'Deny'
       ipRules: ipRules
       // virtualNetworkRules: map([virtualNetworkSubnetId], subnetId => { id: subnetId })
-      // virtualNetworkRules: [
-      //   {
-      //     id: virtualNetworkSubnetId
-      //   }
-      // ]
+      virtualNetworkRules: [
+        {
+          id: virtualNetworkSubnetId
+        }
+      ]
     }
   }
 }

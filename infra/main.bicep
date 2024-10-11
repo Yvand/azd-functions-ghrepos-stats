@@ -15,22 +15,26 @@ param environmentName string
 })
 param location string
 
-@description('List of IP addresses to be allowed in the storage firewall.')
-param ipAddresses array
+@description('List of the public IP addresses allowed to connect to the storage account and the key vault.')
+param allowedIpAddresses array
 
-@description('Application settings to set in the functions app.')
+@description('List of the environment variables to create in the Azure functions service.')
 param appSettings object
 
-param processorServiceName string = ''
-param processorUserAssignedIdentityName string = ''
-param applicationInsightsName string = ''
-param appServicePlanName string = ''
-param logAnalyticsName string = ''
 param resourceGroupName string = ''
+param appServiceName string = ''
+@allowed(['SystemAssigned', 'UserAssigned'])
+param appServiceIdentityType string = 'SystemAssigned'
+param appUserAssignedIdentityName string = ''
+param appServicePlanName string = ''
+param applicationInsightsName string = ''
+param logAnalyticsName string = ''
 param storageAccountName string = ''
 param vNetName string = ''
 param vaultName string = ''
 param disableLocalAuth bool = true
+param publicNetworkAccess string = 'Enabled'
+param keyVaultEnableSoftDelete bool = true
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
@@ -44,13 +48,13 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 }
 
 // User assigned managed identity to be used by the Function App to reach storage and service bus
-module processorUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
+module processorUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = if (appServiceIdentityType == 'UserAssigned') {
   name: 'processorUserAssignedIdentity'
   scope: rg
   params: {
     location: location
     tags: tags
-    identityName: !empty(processorUserAssignedIdentityName) ? processorUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}processor-${resourceToken}'
+    identityName: !empty(appUserAssignedIdentityName) ? appUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}processor-${resourceToken}'
   }
 }
 
@@ -59,7 +63,7 @@ module processor './app/processor.bicep' = {
   name: 'processor'
   scope: rg
   params: {
-    name: !empty(processorServiceName) ? processorServiceName : '${abbrs.webSitesFunctions}processor-${resourceToken}'
+    name: !empty(appServiceName) ? appServiceName : '${abbrs.webSitesFunctions}processor-${resourceToken}'
     location: location
     tags: tags
     applicationInsightsName: monitoring.outputs.applicationInsightsName
@@ -67,8 +71,9 @@ module processor './app/processor.bicep' = {
     runtimeName: 'node'
     runtimeVersion: '20'
     storageAccountName: storage.outputs.name
-    identityId: processorUserAssignedIdentity.outputs.identityId
-    identityClientId: processorUserAssignedIdentity.outputs.identityClientId
+    identityType: appServiceIdentityType
+    identityId: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityId : ''
+    identityClientId: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityClientId : ''
     appSettings: appSettings
     virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
   }
@@ -83,8 +88,8 @@ module storage './core/storage/storage-account.bicep' = {
     location: location
     tags: tags
     containers: [{name: 'deploymentpackage'}]
-    publicNetworkAccess: 'Enabled'
-    ipAddresses: ipAddresses
+    publicNetworkAccess: publicNetworkAccess
+    allowedIpAddresses:allowedIpAddresses
     virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
   }
 }
@@ -98,7 +103,7 @@ module storageRoleAssignmentApi 'app/storage-Access.bicep' = {
   params: {
     storageAccountName: storage.outputs.name
     roleDefinitionID: storageRoleDefinitionId
-    principalID: processorUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
   }
 }
 
@@ -161,40 +166,40 @@ module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = 
   params: {
     appInsightsName: monitoring.outputs.applicationInsightsName
     roleDefinitionID: monitoringRoleDefinitionId
-    principalID: processorUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
   }
 }
 
 // Keyvault
-module vault './core/vault/key-vault.bicep' = {
+module vault './core/vault/vault-resource.bicep' = {
   name: 'vault'
   scope: rg
   params: {
     name: !empty(vaultName) ? vaultName : '${abbrs.vaultAccounts}${resourceToken}'
     location: location
     tags: tags
-    publicNetworkAccess: 'Enabled'
-    ipAddresses: ipAddresses
+    publicNetworkAccess: publicNetworkAccess
+    allowedIpAddresses: allowedIpAddresses
     virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
     tenantId: tenant().tenantId
+    enableSoftDelete: keyVaultEnableSoftDelete
   }
 }
 
-// var vaultRoleDefinitionId  = '4633458b-17de-408a-b874-0445c86b69e6' // Key Vault Secrets User
-@description('This is the built-in Key Vault Administrator role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
+@description('This is the built-in Key Vault Secrets User role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
 resource keyVaultSecretsUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
   scope: subscription()
   name: '4633458b-17de-408a-b874-0445c86b69e6'
 }
 
-// Allow access from processor to storage account using a managed identity
+// Allow access from processor to skey vault using a managed identity
 module vaultRoleAssignmentApi './core/vault/vault-access.bicep' = {
   name: 'vaultRoleAssignmentProcessor'
   scope: rg
   params: {
     keyVaultName: vault.outputs.name
     roleDefinitionID: keyVaultSecretsUserRoleDefinition.id
-    principalID: processorUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
   }
 }
 
