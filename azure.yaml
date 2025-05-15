@@ -4,7 +4,7 @@ name: azfunc-repository-stats
 metadata:
   template: functions-quickstart-typescript-azd@1.0.0-beta
 services:
-  processor:
+  api:
     project: .
     language: js
     host: function
