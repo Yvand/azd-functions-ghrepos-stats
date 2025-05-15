@@ -11,27 +11,20 @@
     "resourceGroupName": {
       "value": "${AZURE_ENV_NAME}"
     },
-    "appServiceName": {
-      "value": "${AZURE_ENV_NAME}"
-    },
-    "appServiceIdentityType": {
-      "value": "SystemAssigned"
-    },
-    "keyVaultEnableSoftDelete": {
-      "value": false
+    "addKeyVault": {
+      "value": "false"
     },
     "allowedIpAddresses": {
-      "value": [
-        "${ALLOWEDIPADDRESSES}"
-      ]
+      "value": ["${ALLOWED_IP_ADDRESSES}"]
     },
     "appSettings": {
       "value": {
-        "CosmosOutputBinding__accountEndpoint": "${APPSETTING_COSMOSOUTPUTBINDING__ACCOUNTENDPOINT}",
+        "FuncRefreshDataSchedule": "0 */30 * * * *",
+        "Repositories": "Yvand/LDAPCP,LDAPCPSE.wsp,15971;Yvand/EntraCP,EntraCP.wsp,1000",
         "CosmosOutputBinding__credential": "managedidentity",
+        "CosmosOutputBinding__accountEndpoint": "${APPSETTING_COSMOSOUTPUTBINDING__ACCOUNTENDPOINT}",
         "CosmosCollectionId": "${APPSETTING_COSMOSCOLLECTIONID}",
-        "CosmosDatabaseId": "${APPSETTING_COSMOSDATABASEID}",
-        "Repositories": "${APPSETTING_REPOSITORIES}"
+        "CosmosDatabaseId": "${APPSETTING_COSMOSDATABASEID}"
       }
     }
   }

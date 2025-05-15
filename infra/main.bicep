@@ -6,8 +6,41 @@ targetScope = 'subscription'
 param environmentName string
 
 @minLength(1)
-@description('Primary location for all resources')
-@allowed(['australiaeast', 'eastasia', 'eastus', 'eastus2', 'northeurope', 'southcentralus', 'southeastasia', 'swedencentral', 'uksouth', 'westus2', 'eastus2euap'])
+@description('Primary location for all resources & Flex Consumption Function App')
+@allowed([
+  'australiaeast'
+  'australiasoutheast'
+  'brazilsouth'
+  'canadacentral'
+  'centralindia'
+  'centralus'
+  'eastasia'
+  'eastus'
+  'eastus2'
+  'eastus2euap'
+  'francecentral'
+  'germanywestcentral'
+  'italynorth'
+  'japaneast'
+  'koreacentral'
+  'northcentralus'
+  'northeurope'
+  'norwayeast'
+  'southafricanorth'
+  'southcentralus'
+  'southeastasia'
+  'southindia'
+  'spaincentral'
+  'swedencentral'
+  'uaenorth'
+  'uksouth'
+  'ukwest'
+  'westcentralus'
+  'westeurope'
+  'westus'
+  'westus2'
+  'westus3'
+])
 @metadata({
   azd: {
     type: 'location'
@@ -16,29 +49,39 @@ param environmentName string
 param location string
 
 @description('List of the public IP addresses allowed to connect to the storage account and the key vault.')
-param allowedIpAddresses array
+param allowedIpAddresses array = []
 
 @description('List of the environment variables to create in the Azure functions service.')
 param appSettings object
 
-param resourceGroupName string = ''
-param appServiceName string = ''
+param vnetEnabled bool = true
+param addKeyVault bool = false
+param apiServiceName string = ''
 @allowed(['SystemAssigned', 'UserAssigned'])
-param appServiceIdentityType string = 'SystemAssigned'
-param appUserAssignedIdentityName string = ''
-param appServicePlanName string = ''
+param apiServiceIdentityType string = 'SystemAssigned'
+param apiUserAssignedIdentityName string = ''
 param applicationInsightsName string = ''
+param appServicePlanName string = ''
 param logAnalyticsName string = ''
+param resourceGroupName string = ''
 param storageAccountName string = ''
 param vNetName string = ''
-param vaultName string = ''
-param disableLocalAuth bool = true
-param publicNetworkAccess string = 'Enabled'
-param keyVaultEnableSoftDelete bool = true
+param keyVaultName string = ''
+@description('Id of the user identity to be used for testing and debugging. This is not required in production. Leave empty if not needed.')
+param principalId string = deployer().objectId
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
+var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
+var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
+// Check if allowedIpAddresses is empty or contains only an empty string
+var allowedIpAddressesNoEmptyString = empty(allowedIpAddresses) || (length(allowedIpAddresses) == 1 && contains(
+    allowedIpAddresses,
+    ''
+  ))
+  ? []
+  : allowedIpAddresses
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -47,82 +90,127 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// User assigned managed identity to be used by the Function App to reach storage and service bus
-module processorUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = if (appServiceIdentityType == 'UserAssigned') {
-  name: 'processorUserAssignedIdentity'
+// User assigned managed identity to be used by the function app to reach storage and other dependencies
+// Assign specific roles to this identity in the RBAC module
+module apiUserAssignedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = if (apiServiceIdentityType == 'UserAssigned') {
+  name: 'apiUserAssignedIdentity'
   scope: rg
   params: {
     location: location
     tags: tags
-    identityName: !empty(appUserAssignedIdentityName) ? appUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}processor-${resourceToken}'
+    name: !empty(apiUserAssignedIdentityName)
+      ? apiUserAssignedIdentityName
+      : '${abbrs.managedIdentityUserAssignedIdentities}api-${resourceToken}'
   }
 }
 
-// The application backend
-module processor './app/processor.bicep' = {
-  name: 'processor'
-  scope: rg
-  params: {
-    name: !empty(appServiceName) ? appServiceName : '${abbrs.webSitesFunctions}processor-${resourceToken}'
-    location: location
-    tags: tags
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
-    appServicePlanId: appServicePlan.outputs.id
-    runtimeName: 'node'
-    runtimeVersion: '20'
-    storageAccountName: storage.outputs.name
-    identityType: appServiceIdentityType
-    identityId: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityId : ''
-    identityClientId: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityClientId : ''
-    appSettings: appSettings
-    virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
-  }
-}
-
-// Backing storage for Azure functions processor
-module storage './core/storage/storage-account.bicep' = {
-  name: 'storage'
-  scope: rg
-  params: {
-    name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    containers: [{name: 'deploymentpackage'}]
-    publicNetworkAccess: publicNetworkAccess
-    allowedIpAddresses:allowedIpAddresses
-    virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
-  }
-}
-
-var storageRoleDefinitionId  = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' //Storage Blob Data Owner role
-
-// Allow access from processor to storage account using a managed identity
-module storageRoleAssignmentApi 'app/storage-Access.bicep' = {
-  name: 'storageRoleAssignmentPRocessor'
-  scope: rg
-  params: {
-    storageAccountName: storage.outputs.name
-    roleDefinitionID: storageRoleDefinitionId
-    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
-  }
-}
-
-module appServicePlan './core/host/appserviceplan.bicep' = {
+// Create an App Service Plan to group applications under the same payment plan and SKU
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.1.1' = {
   name: 'appserviceplan'
   scope: rg
   params: {
     name: !empty(appServicePlanName) ? appServicePlanName : '${abbrs.webServerFarms}${resourceToken}'
-    location: location
-    tags: tags
     sku: {
       name: 'FC1'
       tier: 'FlexConsumption'
     }
+    reserved: true
+    location: location
+    tags: tags
   }
 }
 
-// Virtual Network & private endpoint
-module serviceVirtualNetwork 'app/vnet.bicep' = {
+module api './app/api.bicep' = {
+  name: 'api'
+  scope: rg
+  params: {
+    name: functionAppName
+    location: location
+    tags: tags
+    applicationInsightsName: monitoring.outputs.name
+    appServicePlanId: appServicePlan.outputs.resourceId
+    runtimeName: 'node'
+    runtimeVersion: '22'
+    storageAccountName: storage.outputs.name
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
+    deploymentStorageContainerName: deploymentStorageContainerName
+    identityType: apiServiceIdentityType
+    UserAssignedManagedIdentityId: apiServiceIdentityType == 'UserAssigned' ? apiUserAssignedIdentity.outputs.resourceId : ''
+    UserAssignedManagedIdentityClientId: apiServiceIdentityType == 'UserAssigned' ? apiUserAssignedIdentity.outputs.clientId : ''
+    appSettings: appSettings
+    virtualNetworkSubnetId: vnetEnabled ? serviceVirtualNetwork.outputs.appSubnetID : ''
+  }
+}
+
+var ipRules = [
+  for ipAddress in allowedIpAddressesNoEmptyString: {
+    action: 'Allow'
+    value: ipAddress
+  }
+]
+
+// Backing storage for Azure functions backend API
+module storage 'br/public:avm/res/storage/storage-account:0.8.3' = {
+  name: 'storage'
+  scope: rg
+  params: {
+    name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false // Disable local authentication methods as per policy
+    dnsEndpointType: 'Standard'
+    publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
+    networkAcls: vnetEnabled
+      ? {
+          defaultAction: 'Deny'
+          bypass: 'None'
+          ipRules: empty(allowedIpAddressesNoEmptyString) ? [] : ipRules
+        }
+      : {
+          defaultAction: 'Allow'
+          bypass: 'AzureServices'
+          ipRules: empty(allowedIpAddressesNoEmptyString) ? [] : ipRules
+        }
+    blobServices: {
+      containers: [{ name: deploymentStorageContainerName }]
+    }
+    minimumTlsVersion: 'TLS1_2' // Enforcing TLS 1.2 for better security
+    location: location
+    tags: tags
+  }
+}
+
+// Define the configuration object locally to pass to the modules
+var storageEndpointConfig = {
+  enableBlob: true // Required for AzureWebJobsStorage, .zip deployment, Event Hubs trigger and Timer trigger checkpointing
+  enableQueue: false // Required for Durable Functions and MCP trigger
+  enableTable: false // Required for Durable Functions and OpenAI triggers and bindings
+  enableFiles: false // Not required, used in legacy scenarios
+  allowUserIdentityPrincipal: true // Allow interactive user identity to access for testing and debugging
+}
+
+// Consolidated Role Assignments
+module rbac 'app/rbac.bicep' = {
+  name: 'rbacAssignments'
+  scope: rg
+  params: {
+    storageAccountName: storage.outputs.name
+    appInsightsName: monitoring.outputs.name
+    managedIdentityPrincipalId: apiServiceIdentityType == 'UserAssigned'
+      ? apiUserAssignedIdentity.outputs.principalId
+      : api.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
+    userIdentityPrincipalId: principalId
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
+    allowUserIdentityPrincipal: storageEndpointConfig.allowUserIdentityPrincipal
+    keyVaultName: addKeyVault ? vault.outputs.name : ''
+  }
+}
+
+// Virtual Network & private endpoint to blob storage
+module serviceVirtualNetwork 'app/vnet.bicep' = if (vnetEnabled) {
   name: 'serviceVirtualNetwork'
   scope: rg
   params: {
@@ -132,80 +220,83 @@ module serviceVirtualNetwork 'app/vnet.bicep' = {
   }
 }
 
-module servicePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = {
+module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnabled) {
   name: 'servicePrivateEndpoint'
   scope: rg
   params: {
     location: location
     tags: tags
     virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
-    subnetName: serviceVirtualNetwork.outputs.peSubnetName
+    subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
     resourceName: storage.outputs.name
+    enableBlob: storageEndpointConfig.enableBlob
+    enableQueue: storageEndpointConfig.enableQueue
+    enableTable: storageEndpointConfig.enableTable
   }
 }
 
-// Monitor application with Azure Monitor
-module monitoring './core/monitor/monitoring.bicep' = {
-  name: 'monitoring'
+// Monitor application with Azure Monitor - Log Analytics and Application Insights
+module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.11.1' = {
+  name: '${uniqueString(deployment().name, location)}-loganalytics'
+  scope: rg
+  params: {
+    name: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
+    location: location
+    tags: tags
+    dataRetention: 30
+  }
+}
+
+module monitoring 'br/public:avm/res/insights/component:0.6.0' = {
+  name: '${uniqueString(deployment().name, location)}-appinsights'
+  scope: rg
+  params: {
+    name: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
+    location: location
+    tags: tags
+    workspaceResourceId: logAnalytics.outputs.resourceId
+    disableLocalAuth: true
+  }
+}
+
+// Azure key-vault
+module vault 'br/public:avm/res/key-vault/vault:0.12.1' = if (addKeyVault) {
+  name: '${uniqueString(deployment().name, location)}-vault'
+  scope: rg
+  params: {
+    name: !empty(keyVaultName) ? keyVaultName : '${abbrs.keyVaultVaults}${resourceToken}'
+    enablePurgeProtection: false
+    publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
+    networkAcls: vnetEnabled
+      ? {
+          defaultAction: 'Deny'
+          bypass: 'AzureServices'
+          ipRules: empty(allowedIpAddressesNoEmptyString) ? [] : ipRules
+        }
+      : {
+          defaultAction: 'Allow'
+          bypass: 'AzureServices'
+          ipRules: empty(allowedIpAddressesNoEmptyString) ? [] : ipRules
+        }
+    enableSoftDelete: false
+  }
+}
+
+module vaultPrivateEndpoint 'app/vault-PrivateEndpoint.bicep' = if (vnetEnabled && addKeyVault) {
+  name: 'vaultPrivateEndpoint'
   scope: rg
   params: {
     location: location
     tags: tags
-    logAnalyticsName: !empty(logAnalyticsName) ? logAnalyticsName : '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
-    applicationInsightsName: !empty(applicationInsightsName) ? applicationInsightsName : '${abbrs.insightsComponents}${resourceToken}'
-    disableLocalAuth: disableLocalAuth
-  }
-}
-
-var monitoringRoleDefinitionId = '3913510d-42f4-4e42-8a64-420c390055eb' // Monitoring Metrics Publisher role ID
-
-// Allow access from processor to application insights using a managed identity
-module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = {
-  name: 'appInsightsRoleAssignmentPRocessor'
-  scope: rg
-  params: {
-    appInsightsName: monitoring.outputs.applicationInsightsName
-    roleDefinitionID: monitoringRoleDefinitionId
-    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
-  }
-}
-
-// Keyvault
-module vault './core/vault/vault-resource.bicep' = {
-  name: 'vault'
-  scope: rg
-  params: {
-    name: !empty(vaultName) ? vaultName : '${abbrs.vaultAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    publicNetworkAccess: publicNetworkAccess
-    allowedIpAddresses: allowedIpAddresses
-    virtualNetworkSubnetId: serviceVirtualNetwork.outputs.appSubnetID
-    tenantId: tenant().tenantId
-    enableSoftDelete: keyVaultEnableSoftDelete
-  }
-}
-
-@description('This is the built-in Key Vault Secrets User role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#key-vault-administrator')
-resource keyVaultSecretsUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
-  scope: subscription()
-  name: '4633458b-17de-408a-b874-0445c86b69e6'
-}
-
-// Allow access from processor to skey vault using a managed identity
-module vaultRoleAssignmentApi './core/vault/vault-access.bicep' = {
-  name: 'vaultRoleAssignmentProcessor'
-  scope: rg
-  params: {
-    keyVaultName: vault.outputs.name
-    roleDefinitionID: keyVaultSecretsUserRoleDefinition.id
-    principalID: appServiceIdentityType == 'UserAssigned' ? processorUserAssignedIdentity.outputs.identityPrincipalId : processor.outputs.SERVICE_API_IDENTITY_PRINCIPAL_ID
+    virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
+    subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
+    resourceName: vault.outputs.name
   }
 }
 
 // App outputs
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.connectionString
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
-output SERVICE_PROCESSOR_NAME string = processor.outputs.SERVICE_PROCESSOR_NAME
-output AZURE_FUNCTION_NAME string = processor.outputs.SERVICE_PROCESSOR_NAME
+output SERVICE_API_NAME string = api.outputs.SERVICE_API_NAME
+output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
