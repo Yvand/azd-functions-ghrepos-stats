@@ -1,6 +1,6 @@
-import { GetRelease, GetReleases } from "./gitHubApi";
-import { RepositoryDataDocument } from "./common";
-const { v4: uuidv4 } = require('uuid');
+import { GetRelease, GetReleases } from "./gitHubApi.js";
+import { RepositoryDataDocument } from "./common.js";
+import { v4 as uuidv4 } from "uuid";
 
 /**
  * Query GitHub to get the latest repository data
