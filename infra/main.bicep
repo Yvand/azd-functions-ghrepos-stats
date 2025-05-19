@@ -271,6 +271,8 @@ module vault 'br/public:avm/res/key-vault/vault:0.12.1' = if (addKeyVault) {
   scope: rg
   params: {
     name: !empty(keyVaultName) ? keyVaultName : '${abbrs.keyVaultVaults}${resourceToken}'
+    location: location
+    tags: tags
     enablePurgeProtection: false
     publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
     networkAcls: vnetEnabled
@@ -310,12 +312,13 @@ module cosmosdbAccount 'br/public:avm/res/document-db/database-account:0.15.0' =
     tags: tags
     zoneRedundant: false
     networkRestrictions: {
+      publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
       ipRules: empty(allowedIpAddressesNoEmptyString) ? null : allowedIpAddressesNoEmptyString
       networkAclBypass: 'AzureServices'
     }
     backupPolicyType: 'Periodic'
-    backupIntervalInMinutes: 240
-    backupRetentionIntervalInHours: 8
+    backupIntervalInMinutes: 60 * 24
+    backupRetentionIntervalInHours: 48
     backupStorageRedundancy: 'Local'
     totalThroughputLimit: 4000
   }
@@ -339,3 +342,4 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output SERVICE_API_NAME string = api.outputs.SERVICE_API_NAME
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
+output COSMOSDB_ACCOUNT_ENDPOINT string = cosmosdbAccount.outputs.endpoint
