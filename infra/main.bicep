@@ -67,6 +67,7 @@ param resourceGroupName string = ''
 param storageAccountName string = ''
 param vNetName string = ''
 param keyVaultName string = ''
+param cosmosdbAccountName string = ''
 @description('Id of the user identity to be used for testing and debugging. This is not required in production. Leave empty if not needed.')
 param principalId string = deployer().objectId
 
@@ -137,8 +138,12 @@ module api './app/api.bicep' = {
     enableTable: storageEndpointConfig.enableTable
     deploymentStorageContainerName: deploymentStorageContainerName
     identityType: apiServiceIdentityType
-    UserAssignedManagedIdentityId: apiServiceIdentityType == 'UserAssigned' ? apiUserAssignedIdentity.outputs.resourceId : ''
-    UserAssignedManagedIdentityClientId: apiServiceIdentityType == 'UserAssigned' ? apiUserAssignedIdentity.outputs.clientId : ''
+    UserAssignedManagedIdentityId: apiServiceIdentityType == 'UserAssigned'
+      ? apiUserAssignedIdentity.outputs.resourceId
+      : ''
+    UserAssignedManagedIdentityClientId: apiServiceIdentityType == 'UserAssigned'
+      ? apiUserAssignedIdentity.outputs.clientId
+      : ''
     appSettings: appSettings
     virtualNetworkSubnetId: vnetEnabled ? serviceVirtualNetwork.outputs.appSubnetID : ''
   }
@@ -206,6 +211,7 @@ module rbac 'app/rbac.bicep' = {
     enableTable: storageEndpointConfig.enableTable
     allowUserIdentityPrincipal: storageEndpointConfig.allowUserIdentityPrincipal
     keyVaultName: addKeyVault ? vault.outputs.name : ''
+    cosmosdbAccountName: cosmosdbAccount.outputs.name
   }
 }
 
@@ -291,6 +297,39 @@ module vaultPrivateEndpoint 'app/vault-PrivateEndpoint.bicep' = if (vnetEnabled 
     virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
     subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
     resourceName: vault.outputs.name
+  }
+}
+
+// Azure Cosmos DB
+module cosmosdbAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
+  name: '${uniqueString(deployment().name, location)}-cosmosdb'
+  scope: rg
+  params: {
+    name: !empty(cosmosdbAccountName) ? cosmosdbAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    zoneRedundant: false
+    networkRestrictions: {
+      ipRules: empty(allowedIpAddressesNoEmptyString) ? null : allowedIpAddressesNoEmptyString
+      networkAclBypass: 'AzureServices'
+    }
+    backupPolicyType: 'Periodic'
+    backupIntervalInMinutes: 240
+    backupRetentionIntervalInHours: 8
+    backupStorageRedundancy: 'Local'
+    totalThroughputLimit: 4000
+  }
+}
+
+module cosmosdbPrivateEndpoint 'app/cosmosdb-PrivateEndpoint.bicep' = if (vnetEnabled) {
+  name: 'vaultPrivateEndpoint'
+  scope: rg
+  params: {
+    location: location
+    tags: tags
+    virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
+    subnetName: vnetEnabled ? serviceVirtualNetwork.outputs.peSubnetName : '' // Keep conditional check for safety, though module won't run if !vnetEnabled
+    resourceName: cosmosdbAccount.outputs.name
   }
 }
 
