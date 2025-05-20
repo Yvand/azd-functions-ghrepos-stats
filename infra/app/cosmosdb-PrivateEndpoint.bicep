@@ -46,15 +46,15 @@ module privateDnsZoneVaultDeployment 'br/public:avm/res/network/private-dns-zone
 
 // AVM module for Blob Private Endpoint with private DNS zone
 module cosmosdbPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = {
-  name: 'cosmosdb-private-endpoint-deployment'
+  name: 'private-endpoint-cosmosdb-deployment'
   params: {
-    name: 'cosmosdb-private-endpoint'
+    name: 'private-endpoint-cosmosdb'
     location: location
     tags: tags
     subnetResourceId: '${vnet.id}/subnets/${subnetName}'
     privateLinkServiceConnections: [
       {
-        name: 'cosmosdb-privateLink-connection'
+        name: 'pl-cosmosdb'
         properties: {
           privateLinkServiceId: cosmosdbResource.id
           groupIds: [
