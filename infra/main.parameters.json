@@ -22,7 +22,7 @@
         "FuncRefreshDataSchedule": "0 */30 * * * *",
         "Repositories": "Yvand/LDAPCP,LDAPCPSE.wsp,15971;Yvand/EntraCP,EntraCP.wsp,1000",
         "CosmosOutputBinding__credential": "managedidentity",
-        "CosmosOutputBinding__accountEndpoint": "${APPSETTING_COSMOSOUTPUTBINDING__ACCOUNTENDPOINT}",
+        "CosmosOutputBinding__accountEndpoint": "${COSMOSDB_ACCOUNT_ENDPOINT}",
         "CosmosCollectionId": "${APPSETTING_COSMOSCOLLECTIONID}",
         "CosmosDatabaseId": "${APPSETTING_COSMOSDATABASEID}"
       }
