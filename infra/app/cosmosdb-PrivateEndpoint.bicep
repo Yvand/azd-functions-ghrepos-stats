@@ -23,7 +23,6 @@ resource cosmosdbResource 'Microsoft.DocumentDB/databaseAccounts@2024-11-15' exi
 }
 
 var vaultPrivateDNSZoneName = 'privatelink.documents.azure.com'
-//privatelink-documents-azure-com
 
 // AVM module for vault Private DNS Zone
 module privateDnsZoneVaultDeployment 'br/public:avm/res/network/private-dns-zone:0.7.1' = {
