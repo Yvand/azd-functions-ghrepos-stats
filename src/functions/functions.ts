@@ -91,7 +91,7 @@ export async function RefreshData(myTimer: Timer, context: InvocationContext): P
 
 app.http('GetData', {
   methods: ['GET'],
-  authLevel: 'function',
+  authLevel: 'anonymous',
   handler: GetData
 });
 
