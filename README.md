@@ -1,3 +1,3 @@
-# Purpose
+# Overview
 
-Simple Azure functions to generate statistics about GitHub repositories, stored in Cosmos DB, and return the latest data
+Simple Azure function app to fetch download metrics of releases in GitHub repositories, store them in Cosmos DB, and return the latest data.

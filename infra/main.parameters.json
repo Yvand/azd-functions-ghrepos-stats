@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "resourceGroupName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "addKeyVault": {
+      "value": "false"
+    },
+    "allowedIpAddresses": {
+      "value": ["${ALLOWED_IP_ADDRESSES}"]
+    },
+    "appSettings": {
+      "value": {
+        "FuncRefreshDataSchedule": "0 */30 * * * *",
+        "Repositories": "Yvand/LDAPCP,LDAPCPSE.wsp,15971;Yvand/EntraCP,EntraCP.wsp,1000",
+        "CosmosOutputBinding__credential": "managedidentity",
+        "CosmosOutputBinding__accountEndpoint": "${COSMOSDB_ACCOUNT_ENDPOINT}",
+        "CosmosCollectionId": "${APPSETTING_COSMOSCOLLECTIONID}",
+        "CosmosDatabaseId": "${APPSETTING_COSMOSDATABASEID}"
+      }
+    }
+  }
+}

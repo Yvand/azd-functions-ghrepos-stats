@@ -18,8 +18,8 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
-  ZIP_FILE_NAME: projects-statistics-app.zip
-  NODE_VERSION: '20.x' # set this to the node version to use (supports 8.x, 10.x, 12.x)
+  ZIP_FILE_NAME: ghrepos-stats-function-app.zip
+  NODE_VERSION: '22.x'
 
 jobs:
   build-and-deploy:

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: azd-functions-ghrepos-stats
+metadata:
+  template: azd-functions-sharepoint-webhooks@1.2.0
+services:
+  api:
+    project: .
+    language: js
+    host: function

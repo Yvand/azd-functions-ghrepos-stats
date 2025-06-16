@@ -1,5 +1,5 @@
 import { FeedOptions, CosmosClient, CosmosClientOptions, ContainerResponse } from "@azure/cosmos";
-import { RepositoryDataDocument, Settings } from "./common";
+import { RepositoryDataDocument, Settings } from "./common.js";
 import { DefaultAzureCredential } from "@azure/identity";
 import { InvocationContext } from "@azure/functions";
 

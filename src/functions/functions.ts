@@ -1,7 +1,7 @@
 import { app, CosmosDBOutputOptions, HttpRequest, HttpResponseInit, InvocationContext, output, Timer } from "@azure/functions";
-import { GetLatestDataFromGitHub } from "../app/gitHubRepository";
-import { RepositoryDataDocument, safeWait, Settings } from "../app/common";
-import { GetLatestDocument as GetLatestDocumentFromCosmosDB } from "../app/cosmosData";
+import { GetLatestDataFromGitHub } from "../app/gitHubRepository.js";
+import { RepositoryDataDocument, safeWait, Settings } from "../app/common.js";
+import { GetLatestDocument as GetLatestDocumentFromCosmosDB } from "../app/cosmosData.js";
 
 const cosmosOutputOptions: CosmosDBOutputOptions = {
   connection: Settings.ConnectionPrefix, // prefix for settings: https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-cosmosdb-v2-output#identity-based-connections
@@ -91,7 +91,7 @@ export async function RefreshData(myTimer: Timer, context: InvocationContext): P
 
 app.http('GetData', {
   methods: ['GET'],
-  authLevel: 'function',
+  authLevel: 'anonymous',
   handler: GetData
 });
 

@@ -1,21 +1,32 @@
 {
-  "name": "",
-  "version": "1.0.0",
-  "description": "",
+  "name": "azd-functions-ghrepos-stats",
+  "version": "2.0.0",
+  "description": "Simple Azure function app to fetch download metrics of releases in GitHub repositories, store them in Cosmos DB, and return the latest data.",
+  "author": {
+    "name": "Yvan Duhamel"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yvand/azd-functions-ghrepos-stats.git"
+  },
   "main": "dist/src/functions/*.js",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0 <23.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
-    "start": "func start --verbose",
+    "start": "func start ",
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
-    "@azure/cosmos": "^4.1.1",
+    "@azure/cosmos": "^4.4.1",
     "@azure/functions": "^4.5.1",
     "@azure/identity": "^4.4.1",
-    "uuid": "^10.0.0"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",
